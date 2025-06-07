@@ -116,11 +116,19 @@ def main():
     scheduler.add_job(scheduled_job, 'cron', hour=10, minute=0, timezone=moscow_tz)
     scheduler.start()
 
+    # Get the webhook URL from environment
+    webhook_url = os.getenv('WEBHOOK_URL')
+    if not webhook_url:
+        logger.error("WEBHOOK_URL environment variable is not set")
+        return
+
     # Start the webhook
     application.run_webhook(
         listen='0.0.0.0',
         port=PORT,
-        webhook_url=WEBHOOK_URL
+        webhook_url=webhook_url,
+        cert=None,  # No SSL certificate needed as Render provides HTTPS
+        key=None,   # No SSL key needed as Render provides HTTPS
     )
 
 if __name__ == '__main__':
