@@ -106,7 +106,14 @@ def main():
     # Set up scheduler for daily posts
     scheduler = AsyncIOScheduler()
     moscow_tz = pytz.timezone('Europe/Moscow')
-    scheduler.add_job(send_post, 'cron', hour=10, minute=0, timezone=moscow_tz)
+    
+    # Create a context for the scheduler
+    async def scheduled_job():
+        context = ContextTypes.DEFAULT_TYPE()
+        context.bot = application.bot
+        await send_post(context)
+    
+    scheduler.add_job(scheduled_job, 'cron', hour=10, minute=0, timezone=moscow_tz)
     scheduler.start()
 
     # Start the webhook
