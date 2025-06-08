@@ -28,7 +28,7 @@ CHANNEL_ID = '@notonlypoke'
 
 # OpenRouter API configuration
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
-MODEL = "anthropic/claude-3-opus-20240229"
+MODEL = "google/gemini-pro"  # Changed to a more economical model
 
 async def generate_post():
     """Generate a post using OpenRouter API"""
@@ -39,22 +39,23 @@ async def generate_post():
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://github.com/NLEmasssacre/telegram-health-bot",  # Required by OpenRouter
-        "X-Title": "Telegram Health Bot"  # Required by OpenRouter
+        "HTTP-Referer": "https://github.com/NLEmasssacre/telegram-health-bot",
+        "X-Title": "Telegram Health Bot"
     }
     
-    prompt = """Создай интересный пост для Telegram-канала о здоровом образе жизни. 
+    prompt = """Создай короткий пост для Telegram-канала о здоровом образе жизни. 
     Тема может быть связана с: ЗОЖ, правильным питанием, мотивацией, историями успеха, 
     полезными привычками, лайфхаками, интересными фактами или рецептами.
     Пост должен быть написан на русском языке, быть информативным и мотивирующим.
-    Максимальная длина: 2000 символов."""
+    Максимальная длина: 500 символов."""  # Reduced length
     
     data = {
         "model": MODEL,
         "messages": [
             {"role": "system", "content": "Ты - эксперт по здоровому образу жизни и созданию мотивирующего контента."},
             {"role": "user", "content": prompt}
-        ]
+        ],
+        "max_tokens": 500  # Added token limit
     }
     
     try:
