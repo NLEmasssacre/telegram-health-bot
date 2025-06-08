@@ -32,9 +32,15 @@ MODEL = "anthropic/claude-3-opus-20240229"
 
 async def generate_post():
     """Generate a post using OpenRouter API"""
+    if not OPENROUTER_API_KEY:
+        logger.error("OPENROUTER_API_KEY is not set in environment variables")
+        return None
+
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://github.com/NLEmasssacre/telegram-health-bot",  # Required by OpenRouter
+        "X-Title": "Telegram Health Bot"  # Required by OpenRouter
     }
     
     prompt = """Создай интересный пост для Telegram-канала о здоровом образе жизни. 
@@ -52,12 +58,19 @@ async def generate_post():
     }
     
     try:
+        logger.info("Sending request to OpenRouter API...")
         response = requests.post(OPENROUTER_API_URL, headers=headers, json=data)
         response.raise_for_status()
         result = response.json()
+        logger.info("Successfully received response from OpenRouter API")
         return result['choices'][0]['message']['content']
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error generating post: {str(e)}")
+        if hasattr(e.response, 'text'):
+            logger.error(f"Response text: {e.response.text}")
+        return None
     except Exception as e:
-        logger.error(f"Error generating post: {e}")
+        logger.error(f"Unexpected error generating post: {str(e)}")
         return None
 
 async def send_post(context: ContextTypes.DEFAULT_TYPE):
@@ -69,12 +82,14 @@ async def send_post(context: ContextTypes.DEFAULT_TYPE):
             logger.info("Post successfully sent to channel")
         else:
             logger.error("Failed to generate post")
+            await context.bot.send_message(chat_id=CHANNEL_ID, text="❌ Не удалось сгенерировать пост. Пожалуйста, попробуйте позже.")
     except Exception as e:
         logger.error(f"Error sending post: {e}")
+        await context.bot.send_message(chat_id=CHANNEL_ID, text="❌ Произошла ошибка при отправке поста. Пожалуйста, попробуйте позже.")
 
 async def newpost(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle /newpost command"""
-    await update.message.reply_text("Генерирую новый пост...")
+    await update.message.reply_text("🔄 Генерирую новый пост...")
     await send_post(context)
 
 async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
